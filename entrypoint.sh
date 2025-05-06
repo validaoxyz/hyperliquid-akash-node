@@ -7,5 +7,5 @@ cron
 # Generate override gossip config
 python3 /usr/local/bin/generate_gossip_config.py
 
-# Drop privileges to hluser then exec visor
-exec su -s /bin/bash hluser -c "/home/hluser/hl-visor run-non-validator --replica-cmds-style recent-actions --serve-eth-rpc" 
+# Run visor directly (running as root inside container is acceptable and avoids duplicate processes under Rosetta)
+exec /home/hluser/hl-visor run-non-validator --replica-cmds-style recent-actions --serve-eth-rpc 
