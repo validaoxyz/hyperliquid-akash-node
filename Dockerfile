@@ -23,7 +23,10 @@ RUN echo '{"chain": "Mainnet"}' > /home/$USERNAME/visor.json
 
 # Import GPG public key
 RUN curl -o /home/$USERNAME/pub_key.asc $PUB_KEY_URL \
-    && gpg --import /home/$USERNAME/pub_key.asc
+    && gpg --import /home/$USERNAME/pub_key.asc \
+    && mkdir -p /home/$USERNAME/.gnupg \
+    && cp -r /root/.gnupg/* /home/$USERNAME/.gnupg/ \
+    && chown -R $USERNAME:$USERNAME /home/$USERNAME/.gnupg
 
 # Download and verify hl-visor binary
 RUN curl -o /home/$USERNAME/hl-visor $HL_VISOR_URL \
