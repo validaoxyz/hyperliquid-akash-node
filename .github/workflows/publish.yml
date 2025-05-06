@@ -1,0 +1,38 @@
+name: Build & Push Hyperliquid Node to GHCR
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'Dockerfile'
+      - 'pruner/**'
+      - 'generate_gossip_config.py'
+      - 'entrypoint.sh'
+      - '.github/workflows/publish.yml'
+  workflow_dispatch:
+
+permissions:
+  packages: write
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/hyperliquid-node:latest
+            ghcr.io/${{ github.repository_owner }}/hyperliquid-node:${{ github.sha }} 
