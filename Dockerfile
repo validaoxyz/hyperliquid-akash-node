@@ -12,11 +12,10 @@ ARG HL_VISOR_ASC_URL=https://binaries.hyperliquid-testnet.xyz/Testnet/hl-visor.a
 # Create user and install dependencies
 RUN groupadd --gid $USER_GID $USERNAME \
     && useradd --uid $USER_UID --gid $USER_GID -m $USERNAME \
-    && apt-get update -y && apt-get install -y curl gnupg \
+    && apt-get update -y && apt-get install -y curl gnupg python3 cron \
     && apt-get clean && rm -rf /var/lib/apt/lists/* \
     && mkdir -p /home/$USERNAME/hl/data && chown -R $USERNAME:$USERNAME /home/$USERNAME/hl
 
-USER $USERNAME
 WORKDIR /home/$USERNAME
 
 # Configure chain to testnet
@@ -35,5 +34,26 @@ RUN curl -o /home/$USERNAME/hl-visor $HL_VISOR_URL \
 # Expose gossip ports
 EXPOSE 4000-4010
 
-# Run a non-validating node
-ENTRYPOINT ["/home/hluser/hl-visor", "run-non-validator", "--replica-cmds-style", "recent-actions"]
+# -------------------- Custom helper & pruning -------------------- #
+# Copy README (for seed peer extraction)
+COPY README.md /app/README.md
+ENV README_PATH=/app/README.md
+
+# Helper & pruning scripts
+COPY generate_gossip_config.py /usr/local/bin/generate_gossip_config.py
+COPY pruner/scripts/ /home/$USERNAME/scripts/
+COPY pruner/cron/cron.d/prune /etc/cron.d/prune
+COPY entrypoint.sh /entrypoint.sh
+
+RUN chmod +x /usr/local/bin/generate_gossip_config.py /entrypoint.sh /home/$USERNAME/scripts/*.sh \
+    && chmod 0644 /etc/cron.d/prune \
+    && chown -R $USERNAME:$USERNAME /home/$USERNAME/scripts
+
+# Ensure cron job file is registered
+RUN crontab /etc/cron.d/prune
+
+# Use root for cron startup, but entrypoint will drop privileges for visor process
+USER root
+
+# Replace entrypoint to start cron, generate gossip config, and run visor
+ENTRYPOINT ["/entrypoint.sh"]

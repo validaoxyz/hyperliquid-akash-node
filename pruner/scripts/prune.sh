@@ -17,9 +17,9 @@ size_before=$(du -sh "$DATA_PATH" | cut -f1)
 files_before=$(find "$DATA_PATH" -type f | wc -l)
 echo "$(date): Size before pruning: $size_before with $files_before files" >> /proc/1/fd/1
 
-# Delete data older than 48 hours = 60 minutes * 48 hours
-HOURS=$((60*48))
-find "$DATA_PATH" -mindepth 1 -depth -mmin +$HOURS -type f -delete
+# Delete files older than 1 hour (60 minutes)
+MAX_MINUTES=60
+find "$DATA_PATH" -mindepth 1 -depth -mmin +$MAX_MINUTES -type f -delete
 
 # Get directory size after pruning
 size_after=$(du -sh "$DATA_PATH" | cut -f1)

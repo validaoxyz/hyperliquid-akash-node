@@ -1,0 +1,111 @@
+#!/usr/bin/env python3
+"""
+Generate ~/override_gossip_config.json for Hyperliquid automatically.
+
+Priority order:
+1. If the file specified by the env var VALIDATOR_IPS_FILE (default
+   /run/secrets/validator_ips.txt) exists – use the IPs listed there.
+2. Otherwise, parse the "Mainnet Non-Validator Seed Peers" section of
+   README.md that is copied into the image at /app/README.md by the
+   Dockerfile.  Every line in that fenced code-block is
+   "operator,ip" CSV; we extract the IP addresses.
+
+Outputs ~/override_gossip_config.json with the structure expected by
+Hyperliquid.
+"""
+import json
+import os
+import pathlib
+import re
+import sys
+from typing import List, Dict
+
+# ---------- Config ---------- #
+DEFAULT_IPS_FILE = os.getenv("VALIDATOR_IPS_FILE", "/run/secrets/validator_ips.txt")
+README_PATH = os.getenv("README_PATH", "/app/README.md")
+CHAIN = os.getenv("CHAIN", "Mainnet")
+OUTPUT_PATH = pathlib.Path("/home/hluser/override_gossip_config.json")
+
+_IP_REGEX = re.compile(r"^(?:\d{1,3}\.){3}\d{1,3}$")
+
+
+def _is_valid_ip(ip: str) -> bool:
+    """Basic IPv4 validation (0-255 not enforced – fine for this use-case)."""
+    return bool(_IP_REGEX.match(ip))
+
+
+def _load_ips_from_file(path: str) -> List[str]:
+    """Return list of IP strings from a newline-separated file."""
+    if not os.path.exists(path):
+        return []
+    ips: List[str] = []
+    with open(path, "r", encoding="utf-8") as f:
+        for line in f:
+            ip = line.strip()
+            if _is_valid_ip(ip):
+                ips.append(ip)
+    return ips
+
+
+def _load_ips_from_readme(path: str) -> List[str]:
+    if not os.path.exists(path):
+        print(f"[WARN] README not found at {path}")
+        return []
+    with open(path, "r", encoding="utf-8") as f:
+        content = f.read()
+
+    # regex to capture the code block under the heading
+    block_re = re.compile(
+        r"##\s*Mainnet\s+Non-Validator\s+Seed\s+Peers[\s\S]+?```([\s\S]+?)```",
+        re.I,
+    )
+    m = block_re.search(content)
+    if not m:
+        print("[WARN] Could not locate seed peer section in README")
+        return []
+
+    block = m.group(1)
+    ips: List[str] = []
+    for line in block.splitlines():
+        parts = [p.strip() for p in line.split(",") if p.strip()]
+        if parts:
+            candidate = parts[-1]
+            if _is_valid_ip(candidate):
+                ips.append(candidate)
+    return ips
+
+
+def main() -> None:
+    ips: List[str] = []
+
+    # 1. override file
+    ips = _load_ips_from_file(DEFAULT_IPS_FILE)
+
+    # 2. README fallback
+    if not ips:
+        ips = _load_ips_from_readme(README_PATH)
+
+    # De-duplicate while preserving order
+    seen = set()
+    unique_ips = []
+    for ip in ips:
+        if ip not in seen:
+            unique_ips.append(ip)
+            seen.add(ip)
+
+    cfg: Dict[str, object] = {
+        "root_node_ips": [{"Ip": ip} for ip in unique_ips],
+        "try_new_peers": True,
+        "chain": CHAIN,
+    }
+
+    OUTPUT_PATH.write_text(json.dumps(cfg))
+    print(f"[INFO] Wrote {OUTPUT_PATH} with {len(unique_ips)} root_node_ips")
+
+
+if __name__ == "__main__":
+    try:
+        main()
+    except Exception as e:
+        print(f"[ERROR] {e}")
+        sys.exit(1) 
