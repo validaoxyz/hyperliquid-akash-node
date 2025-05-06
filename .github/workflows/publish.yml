@@ -21,6 +21,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # Enable cross-arch builds (arm64 on amd64 runner)
+      - uses: docker/setup-qemu-action@v3
+
+      - uses: docker/setup-buildx-action@v3
+
       # Log in to GHCR using a PAT stored in repository secret GHCR_PAT (scopes: write:packages, read:packages).
       - name: Login to GHCR
         uses: docker/login-action@v3
@@ -29,12 +34,15 @@ jobs:
           username: ${{ secrets.GHCR_USER }}
           password: ${{ secrets.GHCR_PAT }}
 
-      - name: Build and push image
+      - name: Set version tag
+        id: vars
+        run: echo "TAG=$(date +'%Y%m%d-%H%M%S')" >> "$GITHUB_OUTPUT"
+
+      - name: Build & push
         uses: docker/build-push-action@v5
         with:
-          context: .
           push: true
-          platforms: linux/amd64
+          platforms: linux/amd64,linux/arm64
           tags: |
             ghcr.io/${{ github.repository_owner }}/hyperliquid-akash-node:latest
-            ghcr.io/${{ github.repository_owner }}/hyperliquid-akash-node:${{ github.sha }} 
+            ghcr.io/${{ github.repository_owner }}/hyperliquid-akash-node:${{ steps.vars.outputs.TAG }} 
