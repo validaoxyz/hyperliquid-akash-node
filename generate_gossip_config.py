@@ -110,7 +110,7 @@ def main() -> None:
 
     cfg: Dict[str, object] = {
         "root_node_ips": [{"Ip": ip} for ip in unique_ips],
-        "try_new_peers": True,
+        "try_new_peers": False,
         "chain": CHAIN,
     }
 
