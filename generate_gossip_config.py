@@ -48,11 +48,20 @@ def _load_ips_from_file(path: str) -> List[str]:
 
 
 def _load_ips_from_readme(path: str) -> List[str]:
-    if not os.path.exists(path):
-        print(f"[WARN] README not found at {path}")
-        return []
-    with open(path, "r", encoding="utf-8") as f:
-        content = f.read()
+    if os.path.exists(path):
+        content = pathlib.Path(path).read_text(encoding="utf-8")
+    else:
+        # Fallback: pull README from upstream repo
+        remote_url = os.getenv("SEED_README_URL", "https://raw.githubusercontent.com/hyperliquid-dex/node/main/README.md")
+        try:
+            import urllib.request, ssl
+            print(f"[INFO] Fetching seed peers from {remote_url}")
+            context = ssl.create_default_context()
+            with urllib.request.urlopen(remote_url, context=context, timeout=10) as resp:
+                content = resp.read().decode()
+        except Exception as e:
+            print(f"[WARN] Failed to fetch remote README: {e}")
+            return []
 
     # regex to capture the code block under the heading
     block_re = re.compile(
