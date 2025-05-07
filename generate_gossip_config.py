@@ -63,12 +63,30 @@ def _load_ips_from_readme(path: str) -> List[str]:
             print(f"[WARN] Failed to fetch remote README: {e}")
             return []
 
-    ips: List[str] = []
-    csv_line_re = re.compile(r"^[^,]+,\s*((?:\d{1,3}\.){3}\d{1,3})\s*$", re.M)
-    for match in csv_line_re.finditer(content):
-        ip = match.group(1)
-        if _is_valid_ip(ip):
-            ips.append(ip)
+    def _extract(csv_text: str) -> List[str]:
+        _ips: List[str] = []
+        csv_line_re = re.compile(r"^[^,]+,\s*((?:\d{1,3}\.){3}\d{1,3})\s*$", re.M)
+        for match in csv_line_re.finditer(csv_text):
+            ip = match.group(1)
+            if _is_valid_ip(ip):
+                _ips.append(ip)
+        return _ips
+
+    ips = _extract(content)
+
+    if not ips:
+        # fallback remote even if local existed but had no peers
+        remote_url = "https://raw.githubusercontent.com/hyperliquid-dex/node/main/README.md"
+        try:
+            import urllib.request, ssl
+            print(f"[INFO] Local README had 0 peers, fetching {remote_url}")
+            context = ssl.create_default_context()
+            with urllib.request.urlopen(remote_url, context=context, timeout=10) as resp:
+                remote_txt = resp.read().decode()
+            ips = _extract(remote_txt)
+        except Exception as e:
+            print(f"[WARN] Remote fallback failed: {e}")
+
     return ips
 
 
