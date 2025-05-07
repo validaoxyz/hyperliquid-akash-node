@@ -23,7 +23,11 @@ export TMPDIR=/dev/shm/hl
 # to let the entrypoint launch hl-visor automatically.
 
 if [[ "${START_VISOR:-0}" == "1" ]]; then
-  echo "[INFO] START_VISOR=1 – launching hl-visor as root"
+  echo "[INFO] START_VISOR=1 – launching hl-visor as root (data dir: /home/hluser/hl)"
+  # Force visor (and child hl-node) to treat /home/hluser as HOME so that all
+  # state ends up under /home/hluser/hl instead of /root/hl.
+  export HOME=/home/hluser
+  mkdir -p "$HOME/hl" || true
   exec /home/hluser/hl-visor run-non-validator \
        --replica-cmds-style recent-actions \
        --serve-eth-rpc
