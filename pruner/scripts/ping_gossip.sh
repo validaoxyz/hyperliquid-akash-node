@@ -9,7 +9,7 @@ if ! command -v tcping >/dev/null 2>&1; then
   exit 1
 fi
 
-FILE="${1:-override_gossip_config.json}"
+FILE="${1:-$HOME/override_gossip_config.json}"
 PORT=${PORT:-4001}
 COUNT=${COUNT:-4}
 INTERVAL=${INTERVAL:-300ms}
@@ -31,7 +31,10 @@ ping_ip() {
   printf "%8.3f %s\n" "$avg" "$ip"
 }
 
-echo "Probing $(get_ips | wc -l) IPs on port $PORT ($COUNT× each)…"
+N=$(get_ips | wc -l || true)
+if [[ "$N" == "0" ]]; then
+  echo "[ERROR] No IPs found in $FILE" >&2; exit 1; fi
+echo "Probing $N IPs on port $PORT ($COUNT× each)…"
 while read -r ip; do
     ping_ip "$ip"
 done < <(get_ips) | sort -n | awk '{printf "%-16s %s ms\n", $2, $1}' 
