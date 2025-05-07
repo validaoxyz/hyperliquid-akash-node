@@ -1,1 +1,2 @@
+HL_DATA_PATH=/home/hluser/hl/data
 */5 * * * * /bin/bash -c '/home/hluser/scripts/prune.sh > /proc/1/fd/1 2>&1'
