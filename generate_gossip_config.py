@@ -64,7 +64,7 @@ def _load_ips_from_readme(path: str) -> List[str]:
             return []
 
     # Find any fenced code block whose first line is operator_name,root_ips
-    code_blocks = re.findall(r"```([\s\S]*?)```", content)
+    code_blocks = re.findall(r"```[^\n]*\n([\s\S]*?)```", content)
     block = None
     for cb in code_blocks:
         lines = [ln.strip() for ln in cb.splitlines() if ln.strip()]
