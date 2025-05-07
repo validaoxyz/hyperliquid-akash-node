@@ -18,13 +18,19 @@ import os
 import pathlib
 import re
 import sys
+import subprocess, shlex, shutil
 from typing import List, Dict
+from statistics import mean
 
 # ---------- Config ---------- #
 DEFAULT_IPS_FILE = os.getenv("VALIDATOR_IPS_FILE", "/run/secrets/validator_ips.txt")
 README_PATH = os.getenv("README_PATH", "/app/README.md")
 CHAIN = os.getenv("CHAIN", "Mainnet")
 OUTPUT_PATH = pathlib.Path("/home/hluser/override_gossip_config.json")
+PORT = int(os.getenv("GOSSIP_PORT", "4001"))
+COUNT = int(os.getenv("PING_COUNT", "4"))
+INTERVAL = float(os.getenv("PING_INTERVAL", "0.3"))  # seconds
+ENABLE_RANK = os.getenv("RANK_GOSSIP", "1") == "1"
 
 _IP_REGEX = re.compile(r"^(?:\d{1,3}\.){3}\d{1,3}$")
 
@@ -107,6 +113,29 @@ def main() -> None:
         if ip not in seen:
             unique_ips.append(ip)
             seen.add(ip)
+
+    # Optionally rank by latency using tcping
+    if ENABLE_RANK and shutil.which("tcping"):
+        ranked: List[str] = []
+        for ip in unique_ips:
+            try:
+                cmd = ["tcping", "-c", str(COUNT), "-i", str(INTERVAL), ip, str(PORT)]
+                res = subprocess.run(cmd, capture_output=True, text=True, timeout=PORT*COUNT)
+                times = []
+                for line in res.stdout.splitlines():
+                    if "time=" in line:
+                        # example "Reply from X time=123.456 ms"
+                        try:
+                            ms = float(line.split("time=")[1].split()[0])
+                            times.append(ms)
+                        except Exception:
+                            pass
+                avg = mean(times) if times else 9e9
+            except Exception:
+                avg = 9e9
+            ranked.append((avg, ip))
+        ranked.sort(key=lambda t: t[0])
+        unique_ips = [ip for _, ip in ranked]
 
     cfg: Dict[str, object] = {
         "root_node_ips": [{"Ip": ip} for ip in unique_ips],
