@@ -12,9 +12,17 @@ ARG HL_VISOR_ASC_URL=https://binaries.hyperliquid.xyz/Mainnet/hl-visor.asc
 # Create user and install dependencies
 RUN groupadd --gid $USER_GID $USERNAME \
     && useradd --uid $USER_UID --gid $USER_GID -m $USERNAME \
-    && apt-get update -y && apt-get install -y curl gnupg python3 cron gosu jq tcping \
+    && apt-get update -y && apt-get install -y curl gnupg python3 cron gosu jq \
     && apt-get clean && rm -rf /var/lib/apt/lists/* \
     && mkdir -p /home/$USERNAME/hl/data && chown -R $USERNAME:$USERNAME /home/$USERNAME/hl
+
+# Install tcping static binary (amd64)
+ARG TCPING_VERSION=v2.7.1
+RUN curl -L -o /tmp/tcping.tar.gz "https://github.com/pouriyajamshidi/tcping/releases/download/${TCPING_VERSION}/tcping-linux-amd64-static.tar.gz" \
+    && tar -xzf /tmp/tcping.tar.gz -C /tmp \
+    && mv /tmp/tcping /usr/local/bin/tcping \
+    && chmod +x /usr/local/bin/tcping \
+    && rm /tmp/tcping.tar.gz
 
 WORKDIR /home/$USERNAME
 
