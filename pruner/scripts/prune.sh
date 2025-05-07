@@ -1,13 +1,13 @@
 #!/bin/bash
-DATA_PATH="/home/hluser/hl/data"
+DATA_PATH="${HL_DATA_PATH:-${HOME:-/home/hluser}/hl/data}"
 
 # Log startup for debugging
 echo "$(date): Prune script started" >> /proc/1/fd/1
 
 # Check if data directory exists
 if [ ! -d "$DATA_PATH" ]; then
-    echo "$(date): Error: Data directory $DATA_PATH does not exist." >> /proc/1/fd/1
-    exit 1
+    echo "$(date): Warning: Data directory $DATA_PATH does not exist yet. Skipping pruning." >> /proc/1/fd/1
+    exit 0
 fi
 
 echo "$(date): Starting pruning process at $(date)" >> /proc/1/fd/1
