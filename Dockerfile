@@ -13,7 +13,7 @@ ARG HL_VISOR_ASC_URL=https://binaries.hyperliquid.xyz/Mainnet/hl-visor.asc
 RUN groupadd --gid $USER_GID $USERNAME \
     && useradd --uid $USER_UID --gid $USER_GID -m $USERNAME \
     && apt-get update -y -o Acquire::Retries=3 \
-    && apt-get install -y --no-install-recommends curl gnupg python3 cron gosu jq \
+    && apt-get install -y --no-install-recommends curl ca-certificates gnupg python3 cron gosu jq \
     && apt-get clean && rm -rf /var/lib/apt/lists/* \
     && mkdir -p /home/$USERNAME/hl/data && chown -R $USERNAME:$USERNAME /home/$USERNAME/hl
 
