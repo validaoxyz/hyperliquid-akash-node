@@ -19,5 +19,13 @@ python3 /usr/local/bin/generate_gossip_config.py
 mkdir -p /dev/shm/hl && chmod 1777 /dev/shm/hl
 export TMPDIR=/dev/shm/hl
 
-# Run visor directly (running as root inside container is acceptable and avoids duplicate processes under Rosetta)
-exec gosu hluser /home/hluser/hl-visor run-non-validator --replica-cmds-style recent-actions --serve-evm-rpc 
+# By default, keep the container running for debugging. Set START_VISOR=1
+# to let the entrypoint launch hl-visor automatically.
+
+if [[ "${START_VISOR:-0}" == "1" ]]; then
+  echo "[INFO] START_VISOR=1 – launching hl-visor"
+  exec gosu hluser /home/hluser/hl-visor run-non-validator --replica-cmds-style recent-actions --serve-evm-rpc
+else
+  echo "[INFO] Container started in debug mode. Exec into the pod and run hl-visor manually when ready."
+  tail -f /dev/null
+fi 
