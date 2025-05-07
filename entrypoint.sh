@@ -23,9 +23,11 @@ export TMPDIR=/dev/shm/hl
 # to let the entrypoint launch hl-visor automatically.
 
 if [[ "${START_VISOR:-0}" == "1" ]]; then
-  echo "[INFO] START_VISOR=1 – launching hl-visor"
-  exec gosu hluser /home/hluser/hl-visor run-non-validator --replica-cmds-style recent-actions --serve-evm-rpc
+  echo "[INFO] START_VISOR=1 – launching hl-visor as root"
+  exec /home/hluser/hl-visor run-non-validator \
+       --replica-cmds-style recent-actions \
+       --serve-eth-rpc
 else
-  echo "[INFO] Container started in debug mode. Exec into the pod and run hl-visor manually when ready."
+  echo "[INFO] Debug mode – container is idle, exec bash when ready"
   tail -f /dev/null
 fi 
