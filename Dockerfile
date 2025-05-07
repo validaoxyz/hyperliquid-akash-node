@@ -21,7 +21,7 @@ RUN groupadd --gid $USER_GID $USERNAME \
 ARG TCPING_VERSION=v2.7.1
 RUN curl -L -o /tmp/tcping.tar.gz "https://github.com/pouriyajamshidi/tcping/releases/download/${TCPING_VERSION}/tcping-linux-amd64-static.tar.gz" \
     && tar -xzf /tmp/tcping.tar.gz -C /tmp \
-    && mv /tmp/tcping* /usr/local/bin/tcping \
+    && mv /tmp/tcping /usr/local/bin/ \
     && chmod +x /usr/local/bin/tcping \
     && rm /tmp/tcping.tar.gz
 
