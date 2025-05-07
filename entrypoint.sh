@@ -7,9 +7,10 @@ cron
 # Generate override gossip config
 python3 /usr/local/bin/generate_gossip_config.py
 
-# Give visor an exec-able scratch area for hl-node
+# Work-around for providers that mount rootfs with `noexec` (Akash/CSI volumes).
+# hl-visor respects TMPDIR for downloading hl-node, so point it at an exec-able tmpfs.
 mkdir -p /dev/shm/hl && chmod 1777 /dev/shm/hl
-export TMPDIR=/dev/shm/hl          # visor honours TMPDIR
+export TMPDIR=/dev/shm/hl
 
 # Run visor directly (running as root inside container is acceptable and avoids duplicate processes under Rosetta)
-exec gosu hluser /home/hluser/hl-visor run-non-validator --replica-cmds-style recent-actions --serve-eth-rpc 
+exec gosu hluser /home/hluser/hl-visor run-non-validator --replica-cmds-style recent-actions --serve-evm-rpc 
