@@ -63,17 +63,18 @@ def _load_ips_from_readme(path: str) -> List[str]:
             print(f"[WARN] Failed to fetch remote README: {e}")
             return []
 
-    # regex to capture the code block under the heading
-    block_re = re.compile(
-        r"##\s*Mainnet\s+Non-Validator\s+Seed\s+Peers[\s\S]+?```([\s\S]+?)```",
-        re.I,
-    )
-    m = block_re.search(content)
-    if not m:
-        print("[WARN] Could not locate seed peer section in README")
+    # Find any fenced code block whose first line is operator_name,root_ips
+    code_blocks = re.findall(r"```([\s\S]*?)```", content)
+    block = None
+    for cb in code_blocks:
+        lines = [ln.strip() for ln in cb.splitlines() if ln.strip()]
+        if lines and re.match(r"operator_name\s*,\s*root_ips", lines[0], re.I):
+            block = "\n".join(lines[1:])  # skip header
+            break
+    if block is None:
+        print("[WARN] Could not locate seed peer CSV block in README")
         return []
 
-    block = m.group(1)
     ips: List[str] = []
     for line in block.splitlines():
         parts = [p.strip() for p in line.split(",") if p.strip()]
