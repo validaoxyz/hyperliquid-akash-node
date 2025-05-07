@@ -4,6 +4,11 @@
 # Requires: tcping (apt package) and optionally jq.
 set -euo pipefail
 
+if ! command -v tcping >/dev/null 2>&1; then
+  echo "[ERROR] tcping not found in PATH" >&2
+  exit 1
+fi
+
 FILE="${1:-override_gossip_config.json}"
 PORT=${PORT:-4001}
 COUNT=${COUNT:-4}

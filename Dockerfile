@@ -18,11 +18,9 @@ RUN groupadd --gid $USER_GID $USERNAME \
 
 # Install tcping static binary (amd64)
 ARG TCPING_VERSION=v2.7.1
-RUN curl -L -o /tmp/tcping.tar.gz "https://github.com/pouriyajamshidi/tcping/releases/download/${TCPING_VERSION}/tcping-linux-amd64-static.tar.gz" \
-    && tar -xzf /tmp/tcping.tar.gz -C /tmp \
-    && mv /tmp/tcping /usr/local/bin/tcping \
-    && chmod +x /usr/local/bin/tcping \
-    && rm /tmp/tcping.tar.gz
+RUN curl -L -o /tmp/tcping.deb "https://github.com/pouriyajamshidi/tcping/releases/download/${TCPING_VERSION}/tcping-amd64.deb" \
+    && dpkg -i /tmp/tcping.deb \
+    && rm /tmp/tcping.deb
 
 WORKDIR /home/$USERNAME
 
