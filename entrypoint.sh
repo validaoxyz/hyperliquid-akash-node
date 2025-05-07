@@ -1,6 +1,13 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# If DEBUG_SHELL=1, skip visor startup and drop to a shell so the user
+# can poke around inside the running Akash container.
+if [[ "${DEBUG_SHELL:-0}" == "1" ]]; then
+  echo "[INFO] DEBUG_SHELL requested – starting interactive bash instead of visor"
+  exec bash
+fi
+
 # Start cron for pruning in background
 cron
 
