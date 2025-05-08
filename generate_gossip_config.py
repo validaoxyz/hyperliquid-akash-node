@@ -114,10 +114,7 @@ def main() -> None:
             unique_ips.append(ip)
             seen.add(ip)
 
-    # TEMP TEST: force single IP list
-    unique_ips = ["189.1.164.97"]
-
-    # Optionally rank by latency using tcping (will be skipped when forcing)
+    # Optionally rank by latency using tcping
     if ENABLE_RANK and shutil.which("tcping"):
         ranked: List[str] = []
         for ip in unique_ips:
