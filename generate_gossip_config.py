@@ -136,6 +136,9 @@ def main() -> None:
             ranked.append((avg, ip))
         ranked.sort(key=lambda t: t[0])
         unique_ips = [ip for _, ip in ranked]
+        print("[INFO] Latency ranking (ms, best 5):")
+        for avg, ip in ranked[:5]:
+            print(f"  {avg:.1f}\t{ip}")
 
     cfg: Dict[str, object] = {
         "root_node_ips": [{"Ip": ip} for ip in unique_ips],
